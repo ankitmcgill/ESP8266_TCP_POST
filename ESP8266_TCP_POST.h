@@ -29,7 +29,7 @@
 
 #define ESP8266_TCP_POST_DNS_MAX_TRIES      5
 #define ESP8266_TCP_POST_REPLY_TIMEOUT_MS	  5000
-#define ESP8266_TCP_POST_POST_STRING        "POST %s HTTP/1.1\r\nHost: %s\r\n\r\n"
+#define ESP8266_TCP_POST_POST_STRING        "POST %s HTTP/1.1\r\nHost: %s\r\n%s"
 
 #define ESP8266_TCP_POST_PORT_HTTP          80
 #define ESP8266_TCP_POST_PORT_HTTPS         443
@@ -60,7 +60,7 @@ void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Initialize(const char* hostname,
                           													uint16_t host_port,
                           													const char* host_path,
                                                     uint8_t ssl_on);
-void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size);
+void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size, char* custom_header);
 void ICACHE_FLASH_ATTR ESP8266_TCP_POST_SetDnsServer(uint8_t num_dns, ip_addr_t* dns);
 void ICACHE_FLASH_ATTR ESP8266_TCP_POST_SetCallbackFunctions(void (*tcp_con_cb)(void*),
                     															void (*tcp_discon_cb)(void*),

@@ -96,17 +96,23 @@ void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Initialize(const char* hostname,
 	}
 }
 
-void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size)
+void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size, char* custom_header)
 {
 	//ALLOCATE THE ESP8266 TCP POST REQUEST BUFFER
 
 	_esp8266_tcp_post_post_request_buffer = (char*)os_zalloc(buffer_size);
 
-	//GENERATE THE POST STRING USING HOST-NAME & HOST-PATH & USER SUPPLIED KEY-VALUE PAIRS
-	os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
-			_esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name);
-
-  //ADD USER SUPPLIED KEY VALUE PAIRS TO POST STRING
+	//GENERATE THE POST STRING USING HOST-NAME & HOST-PATH & CUSTOM HEADER (IF SUPPLIED)
+  if(custom_header == NULL)
+  {
+	   os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
+			    _esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name, "\r\n");
+  }
+  else
+  {
+    os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
+         _esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name, custom_header);
+  }
 
 	if(_esp8266_tcp_post_debug)
 	{
