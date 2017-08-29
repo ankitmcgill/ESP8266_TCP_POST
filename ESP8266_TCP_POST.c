@@ -45,7 +45,7 @@ static volatile os_timer_t _esp8266_tcp_post_dns_timer;
 static uint16_t _esp8266_tcp_post_dns_retry_count;
 
 //TCP OBJECT STATE
-static char* _esp8266_tcp_post_post_request_buffer;
+char* _esp8266_tcp_post_post_request_buffer;
 static ESP8266_TCP_POST_STATE _esp8266_tcp_post_state;
 
 //USER DATA RELATED
@@ -96,23 +96,15 @@ void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Initialize(const char* hostname,
 	}
 }
 
-void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size, char* custom_header)
+void ICACHE_FLASH_ATTR ESP8266_TCP_POST_Intialize_Request_Buffer(uint32_t buffer_size)
 {
 	//ALLOCATE THE ESP8266 TCP POST REQUEST BUFFER
 
 	_esp8266_tcp_post_post_request_buffer = (char*)os_zalloc(buffer_size);
 
-	//GENERATE THE POST STRING USING HOST-NAME & HOST-PATH & CUSTOM HEADER (IF SUPPLIED)
-  if(custom_header == NULL)
-  {
-	   os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
-			    _esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name, "\r\n");
-  }
-  else
-  {
-    os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
-         _esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name, custom_header);
-  }
+  //FILL IN HOST NAME AND HOST PATH
+  os_sprintf(_esp8266_tcp_post_post_request_buffer, ESP8266_TCP_POST_POST_STRING,
+                _esp8266_tcp_post_host_path, _esp8266_tcp_post_host_name);
 
 	if(_esp8266_tcp_post_debug)
 	{
@@ -186,6 +178,14 @@ ESP8266_TCP_POST_STATE ICACHE_FLASH_ATTR ESP8266_TCP_POST_GetState(void)
 	return _esp8266_tcp_post_state;
 }
 
+char* ICACHE_FLASH_ATTR ESP8266_TCP_POST_GetUserPostDataStub(void)
+{
+  //RETURN THE POINTER TO THE PART COMPLETE POST DATA BUFFER (WITH HOST & PATH FILLED IN)
+  //SO THAT USER CAN FINISH FILLING IT
+
+  return _esp8266_tcp_post_post_request_buffer;
+}
+
 uint16_t ICACHE_FLASH_ATTR ESP8266_TCP_POST_GetSourcePort(void)
 {
 	//RETURN HOST REMOTE PORT NUMBER
@@ -229,25 +229,14 @@ void ICACHE_FLASH_ATTR ESP8266_TCP_POST_ResolveHostName(void (*user_dns_cb_fn)(i
 	(*_esp8266_tcp_post_dns_cb_function)(&_esp8266_tcp_post_resolved_host_ip);
 }
 
-void ICACHE_FLASH_ATTR ESP8266_TCP_POST_DoPost(char* user_post_data)
+void ICACHE_FLASH_ATTR ESP8266_TCP_POST_DoPost(void)
 {
   //DO THE ACTUAL HTTP POST
-  //USE THE DATA IN THE USER DATA CONTAINER TO BUILD THE ACTUAL POST STRING
-
-  //CREATE THE FINAL POST STRING
-  char* insert_location;
-  if(user_post_data != NULL)
-  {
-    //APPEND USER POST DATA TO POST STRING
-    char* insert_location = strstr(_esp8266_tcp_post_post_request_buffer, "\r\n\r\n");
-    strncpy(insert_location + 4, user_post_data, strlen(user_post_data));
-  }
-  _esp8266_tcp_post_post_request_buffer[strlen(_esp8266_tcp_post_post_request_buffer)] = '\n';
 
   if(_esp8266_tcp_post_debug)
   {
       os_printf("ESP8266 : TCP POST : Post string ...\n");
-      os_printf("%s\n---------\n", _esp8266_tcp_post_post_request_buffer);
+      os_printf("---------\n%s\n---------\n", _esp8266_tcp_post_post_request_buffer);
   }
 
   _esp8266_tcp_post_espconn.proto.tcp = &_esp8266_tcp_post_user_tcp;
